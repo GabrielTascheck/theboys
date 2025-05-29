@@ -4,16 +4,17 @@
 // descreve um nodo da fila 
 struct fila_nodo_t
 {
-  void *item ;			// item associado ao nodo
-  struct fila_nodo_t *prox;	// próximo nodo
+  void *item;               // item associado ao nodo
+  struct fila_nodo_t *prox; // próximo nodo
 };
 
 // descreve uma fila 
 struct fila_t
 {
-  struct fila_nodo_t *prim ;	// primeiro nodo da fila
-  int num ;			// número de itens na fila
-} ;
+  struct fila_nodo_t *prim; // primeiro nodo da fila
+  struct fila_nodo_t *fim;  // último nodo da fila
+  int num; // número de itens na fila
+};
 
 // Cria uma fila vazia.
 // Retorno: ponteiro para a fila criada ou NULL se erro.

@@ -20,6 +20,7 @@ struct fpnodo_t
 struct fprio_t
 {
   struct fpnodo_t *prim ;	// primeiro nodo da fila
+  struct fpnodo_t *fim;   // último nodo da fila 
   int num ;			// número de itens na fila
 } ;
 
