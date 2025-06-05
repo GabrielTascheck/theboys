@@ -32,6 +32,7 @@ struct fila_t *fila_cria()
 
   return fila;
 }
+
 // Libera todas as estruturas de dados da fila, inclusive os itens.
 // Retorno: NULL.
 struct fila_t *fila_destroi(struct fila_t *f)
