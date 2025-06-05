@@ -10,18 +10,18 @@
 // descreve um nodo da fila de prioridades
 struct fpnodo_t
 {
-  void *item ;			// item associado ao nodo
-  int   tipo ;			// tipo do item
-  int   prio ;			// prioridade do item
-  struct fpnodo_t *prox;	// próximo nodo
+	void *item ;			// item associado ao nodo
+	int   tipo ;			// tipo do item
+	int   prio ;			// prioridade do item
+	struct fpnodo_t *prox;	// próximo nodo
 };
 
 // descreve uma fila de prioridades
 struct fprio_t
 {
-  struct fpnodo_t *prim ;	// primeiro nodo da fila
-  struct fpnodo_t *fim;   // último nodo da fila 
-  int num ;			// número de itens na fila
+	struct fpnodo_t *prim ;	// primeiro nodo da fila
+	struct fpnodo_t *fim;		// último nodo da fila
+	int num ;			// número de itens na fila
 } ;
 
 // Cria uma fila vazia.
