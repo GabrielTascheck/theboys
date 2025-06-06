@@ -1,6 +1,9 @@
 #include "entidades.h"
 
 
+#ifndef EVENTOS
+#define EVENTOS
+
 struct evento{
   int tempo;
   struct heroi_ent *heroi;
@@ -40,3 +43,5 @@ struct evento *missao(int t, struct missao_ent *m);
 
 // Encerra a simula¸c˜ao no instante T:
 struct evento *fim(int t);
+
+#endif
