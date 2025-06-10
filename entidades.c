@@ -27,6 +27,7 @@ struct heroi_ent *init_heroi(struct mundo_ent *mundo)
   heroi->pac = aleat(0, 100);
   heroi->vel = aleat(50, 5000);
   heroi->hab = cjto_aleat(mundo->nHabs - 1, aleat(1, 3));
+  heroi->status = 1;
   if(heroi->hab == NULL)
     return NULL;
 

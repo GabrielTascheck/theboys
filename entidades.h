@@ -13,6 +13,7 @@ struct heroi_ent
   int vel;
   int xp;
   int base;
+  int status; //vivo = 1 -- morto = 0
 };
 
 struct base_ent
