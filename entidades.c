@@ -108,6 +108,7 @@ struct mundo_ent *init_mundo()
   mundo->nCompostosV = N_COMPOSTOS_V;
   mundo->tamanhoMundo = N_TAMANHO_MUNDO;
   mundo->relogio = 0;
+  mundo->eventos = 0;
 
   return mundo;
 }

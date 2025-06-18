@@ -50,6 +50,7 @@ struct mundo_ent
   int nCompostosV;
   int tamanhoMundo;
   int relogio;
+  int eventos
 };
 
 

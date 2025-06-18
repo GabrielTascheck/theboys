@@ -267,5 +267,16 @@ void fim(int t, struct mundo_ent *m)
     struct base_ent *base = m->bases[i];
     printf("\nBASE %2d LOT %2d FILA MAX %2d MISSOES %2d", base->id, base->lot, base->filaMax, base->missoes);
   }
-  //FAZER ESTATISTICAS DO MUNDO
+  printf("\nEVENTOS TRATADOS: %d", m->eventos);
+
+  int missoesCump = 0;
+  int tentativasTotal = 0;
+  for (int i = 0; i < m->nMissoes; i++)
+  {
+    if (m->missoes[i]->cumprida == 1)
+      missoesCump++;
+    tentativasTotal += m->missoes[i]->tentativas;
+  }
+  float pMissoes = m->nMissoes / 100.0 * missoesCump;
+  printf("MISSOES CUMPRIDAS: %d/%d (%.1f%%)", missoesCump, m->nMissoes, pMissoes);
 }
