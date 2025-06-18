@@ -231,23 +231,14 @@ static void imprime_habilidades_herois(struct heroi_ent *h, struct mundo_ent *m)
   }
   printf("]");
 }
+
 // Encerra a simula¸c˜ao no instante T:
 // O evento FIM encerra a simula¸c˜ao, gerando um relat´orio com informa¸c˜oes sobre
 // her´ois, bases e miss˜oes:
-/*
-HEROI %2d VIVO PAC %3d VEL %4d EXP %4d HABS [ %d %d ... ]
-HEROI %2d MORTO PAC %3d VEL %4d EXP %4d HABS [ %d %d ... ]
-
-BASE %2d LOT %2d FILA MAX %2d MISSOES %d
-EVENTOS TRATADOS: %d
-MISSOES CUMPRIDAS: %d/%d (%.1f%%)
-TENTATIVAS/MISSAO: MIN %d, MAX %d, MEDIA %.1f
-TAXA MORTALIDADE: %.1f%%
-*/
 void fim(int t, struct mundo_ent *m)
 {
+  int hMortos = 0;
   printf("%d: FIM", t);
-
   for (int i = 0; i < m->nHerois; i++)
   {
     struct heroi_ent *heroi = m->herois[i];
@@ -258,6 +249,7 @@ void fim(int t, struct mundo_ent *m)
     else
     {
       printf("\nHEROI %2d MORTO PAC %3d VEL %4d EXP %4d HABS ", heroi->id, heroi->pac, heroi->vel, heroi->xp);
+      hMortos++;
     }
     imprime_habilidades_herois(heroi, m);
   }
@@ -271,12 +263,41 @@ void fim(int t, struct mundo_ent *m)
 
   int missoesCump = 0;
   int tentativasTotal = 0;
+  int minTentativas = -1; // Initialize with a value that will be immediately overwritten
+  int maxTentativas = -1; // Initialize with a value that will be immediately overwritten
+  float mediaTentativas = 0;
+
   for (int i = 0; i < m->nMissoes; i++)
   {
-    if (m->missoes[i]->cumprida == 1)
+    struct missao_ent *missao = m->missoes[i];
+
+    if (missao->cumprida == 1)
       missoesCump++;
-    tentativasTotal += m->missoes[i]->tentativas;
+
+    tentativasTotal += missao->tentativas;
+
+    if (minTentativas == -1 || missao->tentativas < minTentativas)
+      minTentativas = missao->tentativas;
+
+    if (maxTentativas == -1 || missao->tentativas > maxTentativas)
+      maxTentativas = missao->tentativas;
+
   }
-  float pMissoes = m->nMissoes / 100.0 * missoesCump;
-  printf("MISSOES CUMPRIDAS: %d/%d (%.1f%%)", missoesCump, m->nMissoes, pMissoes);
+
+  float pMissoes;
+  if(m->nMissoes > 0)
+    pMissoes = (missoesCump / (float)m->nMissoes) * 100.0;
+  else
+    pMissoes = 0;
+  printf("\nMISSOES CUMPRIDAS: %d/%d (%.1f%%)", missoesCump, m->nMissoes, pMissoes);
+
+  if (m->nMissoes > 0)
+    mediaTentativas = (float)tentativasTotal / m->nMissoes;
+  else
+    mediaTentativas = 0;
+
+  printf("\nTENTATIVAS/MISSAO: MIN %d, MAX %d, MEDIA %.1f", minTentativas, maxTentativas, mediaTentativas);
+
+  float taxaM = (float)hMortos/m->nHerois * 100;
+  printf("TAXA MORTALIDADE: %.1f%%");
 }
