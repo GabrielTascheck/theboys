@@ -24,6 +24,8 @@ struct base_ent
   struct fila_t *espera;
   int coordX;
   int coordY;
+  int filaMax;
+  int missoes;
 };
 
 struct missao_ent
@@ -32,6 +34,8 @@ struct missao_ent
   struct cjto_t *habs;
   int coordX;
   int coordY;
+  int cumprida;
+  int tentativas;
 };
 
 struct mundo_ent

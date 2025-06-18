@@ -60,6 +60,9 @@ struct base_ent *init_base(struct mundo_ent *mundo)
   base->coordX = aleat(0, mundo->tamanhoMundo);
   base->coordY = aleat(0, mundo->tamanhoMundo);
 
+  base->filaMax = 0;
+  base->missoes = 0;
+
   mundo->bases[base->id] = base;
   mundo->nBases++;
 
@@ -83,6 +86,8 @@ struct missao_ent *init_missao(struct mundo_ent *mundo)
     
   missao->coordX  = aleat(0, mundo->tamanhoMundo);
   missao->coordY  = aleat(0, mundo->tamanhoMundo);
+  missao->cumprida = 0;
+  missao->tentativas = 0;
 
   mundo->missoes[missao->id] = missao;
   mundo->nMissoes++;
