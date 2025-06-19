@@ -21,7 +21,7 @@ struct heroi_ent *init_heroi(struct mundo_ent *mundo)
   if (heroi == NULL)
     return NULL;
 
-
+  heroi->base = -1;
   heroi->id = mundo->nHerois;
   heroi->xp = 0;
   heroi->pac = aleat(0, 100);
@@ -104,6 +104,7 @@ struct mundo_ent *init_mundo()
 
   mundo->nHerois = 0;
   mundo->nBases = 0;
+  mundo->nMissoes = 0;
   mundo->nHabs = N_HABILIDADES;
   mundo->nCompostosV = N_COMPOSTOS_V;
   mundo->tamanhoMundo = N_TAMANHO_MUNDO;

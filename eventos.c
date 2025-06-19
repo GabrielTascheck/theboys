@@ -195,18 +195,21 @@ void sai(int t, struct heroi_ent *h, struct base_ent *b, struct mundo_ent *m, st
 {
   cjto_retira(b->presentes, h->id);
   printf("\n%6d: SAI HEROI %2d BASE %d (%2d/%2d)", t, h->id, b->id, b->presentes->num, b->lot);
-
   struct base_ent *d = m->bases[aleat(0, m->nBases - 1)];
   // fprio_insere VIAJA(agora, H, D)
   // fprio_insere AVISA(agora, B)
 }
 
 // O her´oi H se desloca para uma base D (que pode ser a mesma onde j´a esta)
-void viaja(int t, struct heroi_ent *h, struct base_ent *b, struct base_ent *d, struct mundo_ent *m, struct fprio_t *f)
+void viaja(int t, struct heroi_ent *h, struct base_ent *d, struct mundo_ent *m, struct fprio_t *f)
 {
+  struct base_ent *b = m->bases[h->base]; // b = baseAtual do Heroi
+
   int distancia = hypot(b->coordX - d->coordX, b->coordY - d->coordY);
   int duracao = distancia / h->vel;
+  
   printf("\n%6d: VIAJA HEROI %2d BASE %d BASE %d DIST %d VEL %d CHEGA %d", t, h->id, b->id, d->id, distancia, h->vel, t + duracao);
+  h->base = -1;
   // fprio_insere CHEGA(agora + duração, H, D)
 }
 
@@ -221,7 +224,7 @@ void morre(int t, struct heroi_ent *h, struct base_ent *b, struct missao_ent *m,
 }
 
 // Uma miss˜ao M ´e disparada no instante T
-void missao(int t, struct missao_ent *m, struct fprio_t *f, struct mundo_ent *w)
+void missao(int t, struct missao_ent *m, struct mundo_ent *w, struct fprio_t *f)
 {
   m->tentativas++;
 
@@ -339,5 +342,5 @@ void fim(int t, struct mundo_ent *m)
   printf("\nTENTATIVAS/MISSAO: MIN %d, MAX %d, MEDIA %.1f", minTentativas, maxTentativas, mediaTentativas);
 
   float taxaM = (float)hMortos / m->nHerois * 100;
-  printf("TAXA MORTALIDADE: %.1f%%");
+  printf("TAXA MORTALIDADE: %.1f%%",taxaM);
 }
