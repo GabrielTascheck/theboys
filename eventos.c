@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "fprio.h"
 #include "entidades.h"
@@ -5,13 +6,27 @@
 #include "fila.h"
 #include "math.h"
 
-static int aleat(int min, int max)
+int aleat(int min, int max)
 {
   return min + rand() % (max - min + 1);
 }
 
-static struct base_ent *encontra_base_para_missao(struct missao_ent *m, struct mundo_ent *w, struct base_ent *bP)
+// Imprime conjunto conj que pode conter itens de 0..n
+static void imprime_conjunto(struct cjto_t *conj, int n)
 {
+  printf("[ ");
+  for (int i = 0; i < n; i++)
+  {
+    if (cjto_pertence(conj, i))
+      printf("%d ", i);
+  }
+  printf("]");
+}
+
+int encontra_base_para_missao(struct missao_ent *m, struct mundo_ent *w, struct base_ent *b, struct cjto_t *habs)
+{
+
+  int t = w->relogio;
   // Fila de prioridade para ordenar as bases por distância da missão.
   // A prioridade é a distância; quanto menor, maior a prioridade.
   struct fprio_t *ordemBases = fprio_cria();
@@ -21,17 +36,20 @@ static struct base_ent *encontra_base_para_missao(struct missao_ent *m, struct m
     fprio_insere(ordemBases, w->bases[i], 0, distBase);
   }
 
-  bP = ordemBases->prim->item;
+  struct base_ent *basePerto = ordemBases->prim->item;
 
-  struct base_ent *base_encontrada = NULL;
+  struct base_ent *baseEncontrada = NULL;
   // Enquanto houver bases na fila para verificar
-  while (fprio_tamanho(ordemBases) && base_encontrada == NULL)
+  while (fprio_tamanho(ordemBases) && baseEncontrada == NULL)
   {
     struct base_ent *base_atual;
     int dist_atual;
 
     // Retira a base mais próxima (maior prioridade) da fila
-    fprio_retira(ordemBases, &base_atual, &dist_atual);
+    base_atual = fprio_retira(ordemBases, NULL, &dist_atual);
+
+    printf("\n%6d: MISSAO %d BASE %d DIST %d HEROIS ", t, m->id, base_atual->id, dist_atual);
+    imprime_conjunto(base_atual->presentes, w->nHerois);
 
     // Cria um conjunto para acumular as habilidades dos heróis na base atual
     struct cjto_t *habs_acumuladas = cjto_cria(w->nHabs);
@@ -42,6 +60,8 @@ static struct base_ent *encontra_base_para_missao(struct missao_ent *m, struct m
       // Se o herói 'i' pertence ao conjunto de presentes da base atual
       if (cjto_pertence(base_atual->presentes, i))
       {
+        printf("\n%6d: MISSAO %d HAB HEROI %2d: ", t, m->id, i);
+        imprime_conjunto(w->herois[i]->hab, w->nHabs);
         // Une as habilidades do herói ao conjunto de habilidades acumuladas
         struct cjto_t *habs_acumuladas = cjto_uniao(habs_acumuladas, w->herois[i]->hab);
       }
@@ -50,16 +70,24 @@ static struct base_ent *encontra_base_para_missao(struct missao_ent *m, struct m
     // Verifica se as habilidades acumuladas na base são suficientes para a missão
     if (cjto_contem(habs_acumuladas, m->habs))
     {
-      base_encontrada = base_atual;
+      habs = cjto_copia(habs_acumuladas);
+      baseEncontrada = base_atual;
     }
 
+    printf("\n%6d: MISSAO %d UNIAO HAB BASE %d: ", t, m->id, base_atual->id);
+    imprime_conjunto(habs_acumuladas, w->nHabs);
     cjto_destroi(habs_acumuladas);
   }
 
-  // Libera a memória da fila de prioridade, pois não é mais necessária
+  // Libera a memória da fila de prioridade
   fprio_destroi(ordemBases);
-
-  return base_encontrada;
+  if (baseEncontrada)
+  {
+    b = baseEncontrada;
+    return 1;
+  }
+  b = basePerto;
+  return 0;
 }
 
 static void encontra_herois_da_base(struct heroi_ent *vHerois[], struct base_ent *b, struct mundo_ent *w)
@@ -88,12 +116,15 @@ void chega(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
 
   if (b->lot > b->presentes->num && b->espera->num == 0) // se h´a vagas em B e a fila de espera em B est´a vazia:
   {
+    printf("\n%6d: CHEGA HEROI %2d BASE %d (%2d/%2d) ESPERA", t, h->id, b->id, b->presentes->num, b->lot);
     // fprio_insere ESPERA(agora,H,B)
   }
   else if (h->pac > (10 * b->espera->num)) // espera = (paci^encia de H) > (10 * tamanho da fila em B)
   {
+    printf("\n%6d: CHEGA HEROI %2d BASE %d (%2d/%2d) ESPERA", t, h->id, b->id, b->presentes->num, b->lot);
     // fprio_insere ESPERA(agora,H,B)
   }
+  printf("\n%6d: CHEGA HEROI %2d BASE %d (%2d/%2d) DESISTE", t, h->id, b->id, b->presentes->num, b->lot);
   // fprio_insere DESISTE(agora,H,B)
 }
 
@@ -112,9 +143,10 @@ void espera(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
     printf("Erro ao inserir na fila de espera");
     return;
   }
-  if (b->espera->num > b->filaMax)
+  if (b->espera->num > b->filaMax) // se fila estiver maior que a maior fila registrada
     b->filaMax = b->espera->num;
 
+  printf("\n%6d: ESPERA HEROI %2d BASE %d (%2d)", t, h->id, b->id, b->espera->num);
   // fprio_insere AVISA(agora,B)
 }
 
@@ -126,16 +158,23 @@ void desiste(int t, struct heroi_ent *h, struct base_ent *b, struct mundo_ent *m
 
   struct base_ent *d = m->bases[proxBase];
 
+  printf("\n%6d: DESIST HEROI %2d BASE %d", t, h->id, b->id);
   // fprio_insere VIAJA(agora, H, D)
 }
 
 // O porteiro da base B trata a fila de espera:
 void avisa(int t, struct base_ent *b, struct fprio_t *f)
 {
+  printf("\n%6d: AVISA PORTEIRO BASE %d (%2d/%2d) FILA [ ", t, b->id, b->presentes->num, b->lot);
+  fila_imprime(b->espera);
+  printf(" ]");
   while (b->espera->num < b->lot && b->espera->num > 0) // enquanto houver vaga em B e houver her´ois esperando na fila
   {
     struct heroi_ent *heroi = fila_retira(b->espera);
+
+    printf("\n%6d: AVISA PORTEIRO BASE %d ADMITE %2d", t, b->id, heroi->id);
     cjto_insere(b->presentes, heroi->id);
+
     // fprio_insere ENTRA(agora, H', B)
   }
 }
@@ -145,6 +184,8 @@ void avisa(int t, struct base_ent *b, struct fprio_t *f)
 void entra(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
 {
   int tpb = 15 + h->pac * aleat(1, 20);
+  h->base = b->id;
+  printf("\n%6d: ENTRA HEROI %2d BASE %d (%2d/%2d) SAI %d", t, h->id, b->id, b->presentes->num, b->lot, tpb);
   // fprio_insere SAI(agora+tpb, H, B)
 }
 
@@ -153,26 +194,29 @@ void entra(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
 void sai(int t, struct heroi_ent *h, struct base_ent *b, struct mundo_ent *m, struct fprio_t *f)
 {
   cjto_retira(b->presentes, h->id);
-  struct base_ent *d = m->bases[aleat(0, m->nBases - 1)];
+  printf("\n%6d: SAI HEROI %2d BASE %d (%2d/%2d)", t, h->id, b->id, b->presentes->num, b->lot);
 
+  struct base_ent *d = m->bases[aleat(0, m->nBases - 1)];
   // fprio_insere VIAJA(agora, H, D)
   // fprio_insere AVISA(agora, B)
 }
 
 // O her´oi H se desloca para uma base D (que pode ser a mesma onde j´a esta)
-void viaja(int t, struct heroi_ent *h, struct base_ent *b, struct mundo_ent *m, struct fprio_t *f)
+void viaja(int t, struct heroi_ent *h, struct base_ent *b, struct base_ent *d, struct mundo_ent *m, struct fprio_t *f)
 {
-  double distancia = hypot(m->bases[h->base]->coordX - b->coordX, m->bases[h->base]->coordY - b->coordY);
+  int distancia = hypot(b->coordX - d->coordX, b->coordY - d->coordY);
   int duracao = distancia / h->vel;
-
+  printf("\n%6d: VIAJA HEROI %2d BASE %d BASE %d DIST %d VEL %d CHEGA %d", t, h->id, b->id, d->id, distancia, h->vel, t + duracao);
   // fprio_insere CHEGA(agora + duração, H, D)
 }
 
 // O her´oi H morre no instante T.
-void morre(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
+void morre(int t, struct heroi_ent *h, struct base_ent *b, struct missao_ent *m, struct fprio_t *f)
 {
   cjto_retira(b->presentes, h->id);
   h->status = 0;
+  h->base = -1;
+  printf("\n%6d: MORRE HEROI %2d MISSAO %d", t, h->id, m->id);
   // fprio_insere AVISA (agora , B)
 }
 
@@ -181,10 +225,13 @@ void missao(int t, struct missao_ent *m, struct fprio_t *f, struct mundo_ent *w)
 {
   m->tentativas++;
 
-  struct base_ent *basePerto;
-  struct base_ent *baseEncontrada = encontra_base_para_missao(m, w, basePerto);
+  printf("\n%6d: MISSAO %d TENT %d HAB REQ: ", t, m->id, m->tentativas);
+  imprime_conjunto(m->habs, w->nHabs);
 
-  if (baseEncontrada)
+  struct base_ent *baseEncontrada;
+  struct cjto_t *habsBaseEncontrada;
+
+  if (encontra_base_para_missao(m, w, baseEncontrada, habsBaseEncontrada))
   {
     struct heroi_ent *heroisBase[baseEncontrada->presentes->num];
     encontra_herois_da_base(heroisBase, baseEncontrada, w);
@@ -194,15 +241,17 @@ void missao(int t, struct missao_ent *m, struct fprio_t *f, struct mundo_ent *w)
       heroisBase[i]->xp++;
     }
     baseEncontrada->missoes++;
+    printf("\n%6d: MISSAO %d CUMPRIDA BASE %d HABS: ", t, m->id, baseEncontrada->id);
+    imprime_conjunto(baseEncontrada->presentes, baseEncontrada->presentes->num);
   }
   else
   {
     if (w->nCompostosV && t % 2500 == 0)
     {
-      struct heroi_ent *heroisBase[basePerto->presentes->num];
-      encontra_herois_da_base(heroisBase, basePerto, w);
+      struct heroi_ent *heroisBase[baseEncontrada->presentes->num];
+      encontra_herois_da_base(heroisBase, baseEncontrada, w);
       int maisXP = 0;
-      for (int i = 0; i < basePerto->presentes->num; i++)
+      for (int i = 0; i < baseEncontrada->presentes->num; i++)
       {
         if (heroisBase[i]->xp > heroisBase[maisXP]->xp)
           maisXP = i;
@@ -211,25 +260,17 @@ void missao(int t, struct missao_ent *m, struct fprio_t *f, struct mundo_ent *w)
       heroisBase[maisXP]->xp--;
       w->nCompostosV--;
       m->cumprida = 1;
-      basePerto->missoes++;
+      baseEncontrada->missoes++;
+      printf("\n%6d: MISSAO %d CUMPRIDA BASE %d HABS: ", t, m->id, baseEncontrada->id);
+      imprime_conjunto(habsBaseEncontrada, w->nHabs);
       // fprio_insere MORRE(agora, H mais experiente)
     }
     else
     {
+      printf("\n%6d: MISSAO %d IMPOSSIVEL", t, m->id);
       // fprio_insere MISSAO(t + 24*60, M)
     }
   }
-}
-
-static void imprime_habilidades_herois(struct heroi_ent *h, struct mundo_ent *m)
-{
-  printf("[ ");
-  for (int i = 0; i < m->nHabs; i++)
-  {
-    if (cjto_pertence(h->hab, i))
-      printf("%d ", i);
-  }
-  printf("]");
 }
 
 // Encerra a simula¸c˜ao no instante T:
@@ -251,7 +292,7 @@ void fim(int t, struct mundo_ent *m)
       printf("\nHEROI %2d MORTO PAC %3d VEL %4d EXP %4d HABS ", heroi->id, heroi->pac, heroi->vel, heroi->xp);
       hMortos++;
     }
-    imprime_habilidades_herois(heroi, m);
+    imprime_conjunto(heroi->hab, m->nHabs);
   }
 
   for (int i = 0; i < m->nBases; i++)
@@ -263,8 +304,8 @@ void fim(int t, struct mundo_ent *m)
 
   int missoesCump = 0;
   int tentativasTotal = 0;
-  int minTentativas = -1; // Initialize with a value that will be immediately overwritten
-  int maxTentativas = -1; // Initialize with a value that will be immediately overwritten
+  int minTentativas = -1; 
+  int maxTentativas = -1; 
   float mediaTentativas = 0;
 
   for (int i = 0; i < m->nMissoes; i++)
@@ -281,11 +322,10 @@ void fim(int t, struct mundo_ent *m)
 
     if (maxTentativas == -1 || missao->tentativas > maxTentativas)
       maxTentativas = missao->tentativas;
-
   }
 
   float pMissoes;
-  if(m->nMissoes > 0)
+  if (m->nMissoes > 0)
     pMissoes = (missoesCump / (float)m->nMissoes) * 100.0;
   else
     pMissoes = 0;
@@ -298,6 +338,6 @@ void fim(int t, struct mundo_ent *m)
 
   printf("\nTENTATIVAS/MISSAO: MIN %d, MAX %d, MEDIA %.1f", minTentativas, maxTentativas, mediaTentativas);
 
-  float taxaM = (float)hMortos/m->nHerois * 100;
+  float taxaM = (float)hMortos / m->nHerois * 100;
   printf("TAXA MORTALIDADE: %.1f%%");
 }

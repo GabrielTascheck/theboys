@@ -23,9 +23,9 @@ struct base_ent
   struct cjto_t *presentes;
   struct fila_t *espera;
   int coordX;
-  int coordY;
-  int filaMax;
-  int missoes;
+  int coordY; 
+  int filaMax; //Maior fila
+  int missoes; // qntd de missoes feitas
 };
 
 struct missao_ent
@@ -50,7 +50,7 @@ struct mundo_ent
   int nCompostosV;
   int tamanhoMundo;
   int relogio;
-  int eventos
+  int eventos;
 };
 
 

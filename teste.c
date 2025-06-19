@@ -1,34 +1,45 @@
 #include <stdio.h>
-
-int qParticiona(int v[], int a, int b, int x)
-{
-  int m = a - 1;
-  for (int i = a; i <= b; i++)
-  {
-    if (v[i] <= x)
-    {
-      m++;
-      int aux = v[m];
-      v[m] = v[i];
-      v[i] = aux;
-    }
-  }
-  return m;
-}
-
-void qSort(int v[], int a, int b)
-{
-  if (a >= b)
-    return;
-  int m = qParticiona(v, a, b, v[b]);
-  qSort(v, a, m - 1);
-  qSort(v, m + 1, b);
-}
-
 #include <stdio.h>
+#include "entidades.h"
+#include "eventos.h"
+#include "init.h"
+/*
 
+1 = chega
+2 = espera
+3 = desiste
+4 = avisa
+5 = entra
+6 = sai
+7 = viaja
+8 = morre
+9 = missao
+0 = fim
+
+*/
 int main()
 {
+  struct mundo_ent *w = init_mundo();
+
+  struct fprio_t *eventos = fprio_cria();
+
+  for (int i = 0; i < w->nBases; i++)
+  {
+    init_base(w);
+  }
+  for (int i = 0; i < w->nHerois; i++)
+  {
+    int tempo = aleat(0, 5);
+    int base = aleat(0, w->nBases);
+    struct heroi_ent *h = init_heroi(w);
+    fprio_insere(eventos, h, 1, tempo);
+  }
+  for (int i = 0; i < w->nHerois; i++)
+  {
+    int tempo = aleat(0, T_FIM_DO_MUNDO);
+    struct missao_ent *m = init_missao(w);
+    fprio_insere(eventos, m, 9, tempo);
+  }
 
   return 0;
 }

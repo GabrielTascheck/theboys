@@ -4,6 +4,8 @@
 #ifndef EVENTOS
 #define EVENTOS
 
+int aleat(int min, int max);
+
 // Representa um her´oi H chegando em uma base B no instante T. Ao chegar, o
 // her´oi analisa o tamanho da fila e decide se espera para entrar ou desiste:
 void chega(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f);
