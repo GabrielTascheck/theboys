@@ -32,6 +32,10 @@ struct fprio_t *fprio_cria ();
 // Retorno: NULL.
 struct fprio_t *fprio_destroi (struct fprio_t *f);
 
+// Libera todas as estruturas de dados da fila, mas NÃO os itens.
+// Retorno: NULL.
+struct fprio_t *fprio_destroi_keepItems (struct fprio_t *f);
+
 // Insere o item na fila, mantendo-a ordenada por prioridades crescentes.
 // Itens com a mesma prioridade devem respeitar a politica FIFO (retirar
 // na ordem em que inseriu).

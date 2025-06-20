@@ -33,29 +33,28 @@ struct fila_t *fila_cria()
   return fila;
 }
 
-// Libera todas as estruturas de dados da fila, inclusive os itens.
+// Libera todas as estruturas de dados da fila, mantém os itens.
 // Retorno: NULL.
 struct fila_t *fila_destroi(struct fila_t *f)
 {
   if (!f)
     return NULL;
 
-  if (f->num == 1)
+  struct fila_nodo_t *aux = f->prim;
+
+  while (aux)
   {
-    free(f->prim);
+    struct fila_nodo_t *proximo_nodo = aux->prox;
+
+    // libera o nó atual.
+    free(aux);
+    //free(aux->item);
+    aux = proximo_nodo;
   }
-  else
-  {
-    struct fila_nodo_t *aux;
-    while (f->prim->prox)
-    {
-      aux = f->prim->prox;
-      free(f->prim->item);
-      free(f->prim);
-      f->prim = aux;
-    }
-  }
+
+  // libera a estrutura principal da fila.
   free(f);
+
   return NULL;
 }
 
@@ -90,7 +89,7 @@ int fila_insere(struct fila_t *f, void *item, int valor)
 
 // Retira o primeiro item da fila e o devolve
 // Retorno: ponteiro para o item retirado ou NULL se fila vazia ou erro.
-void *fila_retira(struct fila_t *f, int *valor)
+void *fila_retira(struct fila_t *f)
 {
   if (!f || !f->num)
     return NULL;
@@ -98,8 +97,6 @@ void *fila_retira(struct fila_t *f, int *valor)
   struct fila_nodo_t *aux;
   void *item = f->prim->item;
 
-  *valor = f->prim->valor;
-  
   aux = f->prim;
   f->prim = aux->prox;
   free(aux);
@@ -133,5 +130,5 @@ void fila_imprime(struct fila_t *f)
     aux = aux->prox;
   }
   if (f->num > 0)
-    printf("%d", 2);
+    printf("%d", aux->valor);
 }

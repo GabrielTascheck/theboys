@@ -4,7 +4,7 @@
 CC      = gcc
 CFLAGS  = -Wall -Wextra -Werror -g -std=c99
 LDLIBS  = -lm
-MAIN    = teste
+MAIN    = theboys
 ENTREGA = $(MAIN)
 
 # lista de arquivos de cabeçalho (a completar)
@@ -12,7 +12,7 @@ HDR = fila.h fprio.h conjunto.h entidades.h eventos.h init.h
 
 # lista de arquivos-objeto (a completar)
 # não inclua conjunto.o, senão ele será removido com "make clean"
-OBJ = fila.o fprio.o entidades.o eventos.o teste.o #theboys.o
+OBJ = fila.o fprio.o entidades.o eventos.o theboys.o
 
 # construir o executável
 $(MAIN): $(MAIN).o $(OBJ) conjunto.o

@@ -21,7 +21,7 @@ struct fila_t
 // Retorno: ponteiro para a fila criada ou NULL se erro.
 struct fila_t *fila_cria ();
 
-// Libera todas as estruturas de dados da fila, inclusive os itens.
+// Libera todas as estruturas de dados da fila, MANTÉM os itens.
 // Retorno: NULL.
 struct fila_t *fila_destroi (struct fila_t *f);
 
@@ -32,7 +32,7 @@ int fila_insere (struct fila_t *f, void *item, int valor);
 
 // Retira o primeiro item da fila e o devolve
 // Retorno: ponteiro para o item retirado ou NULL se fila vazia ou erro.
-void *fila_retira (struct fila_t *f, int *valor);
+void *fila_retira (struct fila_t *f);
 
 // Informa o número de itens na fila.
 // Retorno: N >= 0 ou -1 se erro.

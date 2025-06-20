@@ -77,4 +77,8 @@ struct missao_ent *init_missao(struct mundo_ent *mundo);
 
 struct mundo_ent *init_mundo();
 
+// Libera todas as memórias de herois/bases/missões que envolvem
+// um mundo
+struct mundo_ent *mundo_destroi(struct mundo_ent *w);
+
 #endif

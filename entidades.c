@@ -1,17 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include "entidades.h"
 #include "init.h"
 #include "conjunto.h"
-
-static int aleat(int min, int max)
-{
-  int div = max - min + 1;
-  if (!div)
-    return min;
-  return min + rand() % div;
-}
+#include "eventos.h"
 
 struct heroi_ent *init_heroi(struct mundo_ent *mundo)
 {
@@ -33,14 +25,14 @@ struct heroi_ent *init_heroi(struct mundo_ent *mundo)
   heroi->xp = 0;
   heroi->pac = aleat(0, 100);
   heroi->vel = aleat(50, 5000);
-  heroi->hab = cjto_aleat(aleat(1, 3), mundo->nHabs);
   heroi->status = 1;
+  heroi->hab = cjto_aleat(aleat(1, 3), mundo->nHabs);
   if (heroi->hab == NULL)
     return NULL;
 
   mundo->herois[mundo->nHerois] = heroi;
   mundo->nHerois++;
-
+  
   return heroi;
 }
 
@@ -61,7 +53,7 @@ struct base_ent *init_base(struct mundo_ent *mundo)
 
   base->id = mundo->nBases;
   base->lot = aleat(3, 10);
-  base->presentes = cjto_cria(base->lot);
+  base->presentes = cjto_cria(N_HEROIS);
   if (base->presentes == NULL)
     return NULL;
 
@@ -128,4 +120,49 @@ struct mundo_ent *init_mundo()
   // mundo->eventos = 0;
 
   return mundo;
+}
+
+struct mundo_ent *mundo_destroi(struct mundo_ent *w)
+{
+  if (w == NULL) // Boa prática: sempre verifique se o ponteiro é nulo
+    return NULL;
+
+  // Libera todos os heróis alocados dinamicamente
+  for (int i = 0; i < w->nHerois; i++)
+  {
+    if (w->herois[i])
+    {
+      struct heroi_ent *h = w->herois[i];
+      cjto_destroi(h->hab);
+      free(h);
+    }
+  }
+
+  // Libera todas as bases alocadas dinamicamente
+  for (int i = 0; i < w->nBases; i++)
+  {
+    if (w->bases[i])
+    {
+      struct base_ent *b = w->bases[i];
+      cjto_destroi(b->presentes);
+      fila_destroi(b->espera);
+      free(b);
+    }
+  }
+
+  // Libera todas as missões alocadas dinamicamente
+  for (int i = 0; i < w->nMissoes; i++)
+  {
+    if (w->missoes[i])
+    {
+      struct missao_ent *m = w->missoes[i];
+      cjto_destroi(m->habs);
+      free(m);
+    }
+  }
+
+  // Libera a estrutura mundo
+  free(w);
+
+  return NULL;
 }

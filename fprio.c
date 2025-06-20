@@ -52,6 +52,24 @@ struct fprio_t *fprio_destroi (struct fprio_t *f)
   return NULL;
 }
 
+struct fprio_t *fprio_destroi_keepItems (struct fprio_t *f)
+{
+  if (!f)
+    return NULL;
+
+  struct fpnodo_t *aux;
+ 
+  while(f->prim != NULL)
+  {
+    aux = f->prim->prox;
+    free(f->prim);
+    f->prim = aux;
+  }
+
+  free(f);
+  return NULL;
+}
+
 
 // Insere o item na fila, mantendo-a ordenada por prioridades crescentes.
 // Itens com a mesma prioridade devem respeitar a politica FIFO (retirar
@@ -63,7 +81,7 @@ int fprio_insere (struct fprio_t *f, void *item, int tipo, int prio)
   if (!f || !item)
     return -1;
   if (verifica_repetido(f, item))
-      return -1;
+      return -2;
 
   struct fpnodo_t *novo = malloc(sizeof(struct fpnodo_t));
 

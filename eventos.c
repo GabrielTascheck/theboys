@@ -52,7 +52,7 @@ int encontra_base_para_missao(struct missao_ent *m, struct mundo_ent *w, struct 
     if (w->bases[i]->presentes->num > 0)
     {
       int distBase = hypot(m->coordX - w->bases[i]->coordX, m->coordY - w->bases[i]->coordY);
-      fprio_insere(ordemBases, w->bases[i], i, distBase);
+      fprio_insere(ordemBases, w->bases[i], -2, distBase);
     }
   }
 
@@ -64,7 +64,7 @@ int encontra_base_para_missao(struct missao_ent *m, struct mundo_ent *w, struct 
   {
     // Se não há bases com heróis, retorna NULL e 0
     *b = NULL;
-    fprio_destroi(ordemBases);
+    fprio_destroi_keepItems(ordemBases);
     return 0;
   }
 
@@ -91,9 +91,12 @@ int encontra_base_para_missao(struct missao_ent *m, struct mundo_ent *w, struct 
     {
       if (cjto_pertence(base_atual->presentes, i))
       {
+        struct cjto_t *aux;
         printf("\n%6d: MISSAO %d HAB HEROI %2d: ", t, m->id, i);
         imprime_conjunto(w->herois[i]->hab, w->nHabs);
-        habs_acumuladas = cjto_uniao(habs_acumuladas, w->herois[i]->hab);
+        aux = cjto_uniao(habs_acumuladas, w->herois[i]->hab);
+        cjto_destroi(habs_acumuladas);
+        habs_acumuladas = aux;
       }
     }
 
@@ -109,7 +112,7 @@ int encontra_base_para_missao(struct missao_ent *m, struct mundo_ent *w, struct 
     cjto_destroi(habs_acumuladas);
   }
 
-  fprio_destroi(ordemBases); // Libera a memória da fila de prioridade
+  fprio_destroi_keepItems(ordemBases); // Libera a memória da fila de prioridade
 
   if (baseEncontrada)
   {
@@ -151,6 +154,8 @@ void chega(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
     return;
   }
 
+  h->base = b->id;
+
   struct evt_gen *evento = evento_cria();
   if (!evento)
   {
@@ -163,9 +168,9 @@ void chega(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
   if (b->lot > b->presentes->num && b->espera->num == 0) // se h´a vagas em B e a fila de espera em B est´a vazia:
   {
     printf("\n%6d: CHEGA HEROI %2d BASE %d (%2d/%2d) ESPERA", t, h->id, b->id, b->presentes->num, b->lot);
-    if (fprio_insere(f, evento, E_ESPERA, t) == -1)
+    if (fprio_insere(f, evento, E_ESPERA, t) < 0)
     {
-      fprintf(stderr, "\nERRO AO INSERIR NA FILA FPRIO %d", t);
+      fprintf(stderr, "\nERRO AO INSERIR NA FILA FPRIO %d ",t);
       return;
     }
     // fprio_insere ESPERA(agora,H,B)
@@ -173,9 +178,9 @@ void chega(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
   else if (h->pac > (10 * b->espera->num)) // espera = (paci^encia de H) > (10 * tamanho da fila em B)
   {
     printf("\n%6d: CHEGA HEROI %2d BASE %d (%2d/%2d) ESPERA", t, h->id, b->id, b->presentes->num, b->lot);
-    if (fprio_insere(f, evento, E_ESPERA, t) == -1)
+    if (fprio_insere(f, evento, E_ESPERA, t) < 0)
     {
-      fprintf(stderr, "\nERRO AO INSERIR NA FILA FPRIO %d", t);
+      fprintf(stderr, "\nERRO AO INSERIR NA FILA FPRIO %d ",t);
       return;
     }
     // fprio_insere ESPERA(agora,H,B)
@@ -184,9 +189,9 @@ void chega(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
   {
     printf("\n%6d: CHEGA HEROI %2d BASE %d (%2d/%2d) DESISTE", t, h->id, b->id, b->presentes->num, b->lot);
 
-    if (fprio_insere(f, evento, E_DESISTE, t))
+    if (fprio_insere(f, evento, E_DESISTE, t) < 0)
     {
-      fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d", t);
+      fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d ",t);
       return;
     }
     // fprio_insere DESISTE(agora,H,B)
@@ -203,7 +208,7 @@ void espera(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
     return;
   }
 
-  if (fila_insere(b->espera, h, h->id) == -1)
+  if (fila_insere(b->espera, h, h->id) < 0)
   {
     fprintf(stderr, "\nDEBUG: Erro ao inserir na fila de espera");
     return;
@@ -220,9 +225,9 @@ void espera(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
     return;
   }
   evento->b = b;
-  if (fprio_insere(f, evento, E_AVISA, t) == -1)
+  if (fprio_insere(f, evento, E_AVISA, t) < 0)
   {
-    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d", t);
+    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d" ,t);
     return;
   }
   // fprio_insere AVISA(agora,B)
@@ -247,9 +252,9 @@ void desiste(int t, struct heroi_ent *h, struct base_ent *b, struct mundo_ent *m
   }
   evento->h = h;
   evento->b = d;
-  if (fprio_insere(f, evento, E_VIAJA, t) == -1)
+  if (fprio_insere(f, evento, E_VIAJA, t) < 0)
   {
-    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d", t);
+    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d" ,t);
     return;
   }
   // fprio_insere VIAJA(agora, H, D)
@@ -261,9 +266,10 @@ void avisa(int t, struct base_ent *b, struct fprio_t *f)
   printf("\n%6d: AVISA PORTEIRO BASE %d (%2d/%2d) FILA [ ", t, b->id, b->presentes->num, b->lot);
   fila_imprime(b->espera);
   printf(" ]");
-  while (b->espera->num < b->lot && b->espera->num > 0) // enquanto houver vaga em B e houver her´ois esperando na fila
+  while (b->presentes->num < b->lot && b->espera->num > 0) // enquanto houver vaga em B e houver her´ois esperando na fila
   {
-    struct heroi_ent *heroi = fila_retira(b->espera, &heroi->id);
+
+    struct heroi_ent *heroi = fila_retira(b->espera);
     if (!heroi)
     {
       fprintf(stderr, "\nDEBUG: Fila retira falhou");
@@ -281,9 +287,9 @@ void avisa(int t, struct base_ent *b, struct fprio_t *f)
     }
     evento->h = heroi;
     evento->b = b;
-    if (fprio_insere(f, evento, E_ENTRA, t) == -1)
+    if (fprio_insere(f, evento, E_ENTRA, t) < 0)
     {
-      fprintf(stderr, "\nERRO AO INSERIR NA FILA FPRIO %d", t);
+      fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d" ,t);
       return;
     }
     // fprio_insere ENTRA(agora, H', B)
@@ -295,7 +301,6 @@ void avisa(int t, struct base_ent *b, struct fprio_t *f)
 void entra(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
 {
   int tpb = 15 + h->pac * aleat(1, 20);
-  h->base = b->id;
   printf("\n%6d: ENTRA HEROI %2d BASE %d (%2d/%2d) SAI %d", t, h->id, b->id, b->presentes->num, b->lot, t + tpb);
 
   struct evt_gen *evento = evento_cria();
@@ -306,9 +311,9 @@ void entra(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
   }
   evento->h = h;
   evento->b = b;
-  if (fprio_insere(f, evento, E_SAI, t + tpb) == -1)
+  if (fprio_insere(f, evento, E_SAI, t + tpb) < 0)
   {
-    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d", t);
+    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d ",t);
     return;
   }
   // fprio_insere SAI(agora+tpb, H, B)
@@ -324,9 +329,6 @@ void sai(int t, struct heroi_ent *h, struct base_ent *b, struct mundo_ent *m, st
   int idProxBase = aleat(0, m->nBases - 1);
   struct base_ent *d = m->bases[idProxBase];
 
-  fprintf(stderr,"\nIDPROXBASE: %d %d %d",idProxBase,d->id, m->bases[idProxBase]->id);
-
-  
   struct evt_gen *eventoV = evento_cria();
   if (!eventoV)
   {
@@ -335,9 +337,9 @@ void sai(int t, struct heroi_ent *h, struct base_ent *b, struct mundo_ent *m, st
   }
   eventoV->h = h;
   eventoV->b = d;
-  if (fprio_insere(f, eventoV, E_VIAJA, t) == -1)
+  if (fprio_insere(f, eventoV, E_VIAJA, t) < 0)
   {
-    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d", t);
+    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d %d", t, fprio_insere(f, eventoV, E_VIAJA, t));
     return;
   }
   // fprio_insere VIAJA(agora, H, D)
@@ -350,9 +352,9 @@ void sai(int t, struct heroi_ent *h, struct base_ent *b, struct mundo_ent *m, st
   }
   eventoA->h = h;
   eventoA->b = b;
-  if (fprio_insere(f, eventoA, E_AVISA, t) == -1)
+  if (fprio_insere(f, eventoA, E_AVISA, t) < 0)
   {
-    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d", t);
+    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d %d", t, fprio_insere(f, eventoA, E_AVISA, t));
     return;
   }
   // fprio_insere AVISA(agora, B)
@@ -361,11 +363,6 @@ void sai(int t, struct heroi_ent *h, struct base_ent *b, struct mundo_ent *m, st
 // O her´oi H se desloca para uma base D (que pode ser a mesma onde j´a esta)
 void viaja(int t, struct heroi_ent *h, struct base_ent *d, struct mundo_ent *m, struct fprio_t *f)
 {
-  if (h->base == -1)
-  {
-    fprintf(stderr, "\nDEBUG: Heroi %d, h->base = %d, m->nBases = %d\n", h->id, h->base, m->nBases);
-    return;
-  }
   struct base_ent *b = m->bases[h->base]; // b = baseAtual do Heroi
   if (!b || !d)
   {
@@ -390,9 +387,9 @@ void viaja(int t, struct heroi_ent *h, struct base_ent *d, struct mundo_ent *m, 
   evento->h = h;
   evento->b = d;
 
-  if (fprio_insere(f, evento, E_CHEGA, t + duracao) == -1)
+  if (fprio_insere(f, evento, E_CHEGA, t + duracao) < 0)
   {
-    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d", t);
+    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d ",t);
     return;
   }
   // fprio_insere CHEGA(agora + duração, H, D)
@@ -401,7 +398,7 @@ void viaja(int t, struct heroi_ent *h, struct base_ent *d, struct mundo_ent *m, 
 // O her´oi H morre no instante T.
 void morre(int t, struct heroi_ent *h, struct base_ent *b, struct missao_ent *m, struct fprio_t *f)
 {
-  if (cjto_retira(b->presentes, h->id) == -1)
+  if (cjto_retira(b->presentes, h->id) < 0)
   {
     fprintf(stderr, "\nDEBUG: Cjto retira ERRO");
     return;
@@ -417,9 +414,9 @@ void morre(int t, struct heroi_ent *h, struct base_ent *b, struct missao_ent *m,
   }
   evento->h = h;
   evento->b = b;
-  if (fprio_insere(f, evento, E_AVISA, t) == -1)
+  if (fprio_insere(f, evento, E_AVISA, t) < 0)
   {
-    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d", t);
+    fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d" ,t);
     return;
   }
   // fprio_insere AVISA (agora , B)
@@ -434,7 +431,7 @@ void missao(int t, struct missao_ent *m, struct mundo_ent *w, struct fprio_t *f)
   imprime_conjunto(m->habs, w->nHabs);
 
   struct base_ent *baseEncontrada = NULL;
-  struct cjto_t *habsBaseEncontrada;
+  struct cjto_t *habsBaseEncontrada = NULL;
   if (encontra_base_para_missao(m, w, &baseEncontrada, &habsBaseEncontrada))
   {
     struct heroi_ent *heroisBase[baseEncontrada->presentes->num];
@@ -446,63 +443,62 @@ void missao(int t, struct missao_ent *m, struct mundo_ent *w, struct fprio_t *f)
     }
     baseEncontrada->missoes++;
     printf("\n%6d: MISSAO %d CUMPRIDA BASE %d HABS: ", t, m->id, baseEncontrada->id);
-    imprime_conjunto(baseEncontrada->presentes, baseEncontrada->presentes->num);
+    imprime_conjunto(habsBaseEncontrada, w->nHabs);
+  }
+  else if (w->nCompostosV && t % 2500 == 0 && baseEncontrada)
+  {
+    struct heroi_ent *heroisBase[baseEncontrada->presentes->num];
+    encontra_herois_da_base(heroisBase, baseEncontrada, w);
+    int maisXP = 0; // id do heroi com mais xp
+    for (int i = 0; i < baseEncontrada->presentes->num; i++)
+    {
+      if (heroisBase[i]->xp > heroisBase[maisXP]->xp)
+        maisXP = i;
+      heroisBase[i]->xp++;
+    }
+    heroisBase[maisXP]->xp--;
+    w->nCompostosV--;
+    m->cumprida = 1;
+    baseEncontrada->missoes++;
+    printf("\n%6d: MISSAO %d CUMPRIDA BASE %d HABS: ", t, m->id, baseEncontrada->id);
+    imprime_conjunto(habsBaseEncontrada, w->nHabs);
+
+    struct evt_gen *evento = evento_cria();
+    if (!evento)
+    {
+      fprintf(stderr, "\nDEBUG: Criar evento falhou");
+      return;
+    }
+    evento->h = heroisBase[maisXP];
+    evento->b = baseEncontrada;
+    evento->m = m;
+    if (fprio_insere(f, evento, E_MORRE, t) < 0)
+    {
+      fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d" ,t);
+      return;
+    }
+    // fprio_insere MORRE(agora, H mais experiente)
   }
   else
   {
-    if (w->nCompostosV && t % 2500 == 0 && baseEncontrada)
-    {
-      struct heroi_ent *heroisBase[baseEncontrada->presentes->num];
-      encontra_herois_da_base(heroisBase, baseEncontrada, w);
-      int maisXP = 0; // id do heroi com mais xp
-      for (int i = 0; i < baseEncontrada->presentes->num; i++)
-      {
-        if (heroisBase[i]->xp > heroisBase[maisXP]->xp)
-          maisXP = i;
-        heroisBase[i]->xp++;
-      }
-      heroisBase[maisXP]->xp--;
-      w->nCompostosV--;
-      m->cumprida = 1;
-      baseEncontrada->missoes++;
-      printf("\n%6d: MISSAO %d CUMPRIDA BASE %d HABS: ", t, m->id, baseEncontrada->id);
-      imprime_conjunto(habsBaseEncontrada, w->nHabs);
+    printf("\n%6d: MISSAO %d IMPOSSIVEL", t, m->id);
 
-      struct evt_gen *evento = evento_cria();
-      if (!evento)
-      {
-        fprintf(stderr, "\nDEBUG: Criar evento falhou");
-        return;
-      }
-      evento->h = heroisBase[maisXP];
-      evento->b = baseEncontrada;
-      evento->m = m;
-      if (fprio_insere(f, evento, E_MORRE, t) == -1)
-      {
-        fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d", t);
-        return;
-      }
-      // fprio_insere MORRE(agora, H mais experiente)
-    }
-    else
+    struct evt_gen *evento = evento_cria();
+    if (!evento)
     {
-      printf("\n%6d: MISSAO %d IMPOSSIVEL", t, m->id);
-
-      struct evt_gen *evento = evento_cria();
-      if (!evento)
-      {
-        fprintf(stderr, "\nDEBUG: Criar evento falhou");
-        return;
-      }
-      evento->m = m;
-      if (fprio_insere(f, evento, E_MISSAO, t + 24 * 60) == -1)
-      {
-        fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d", t);
-        return;
-      }
-      // fprio_insere MISSAO(t + 24*60, M)
+      fprintf(stderr, "\nDEBUG: Criar evento falhou");
+      return;
     }
+    evento->m = m;
+    if (fprio_insere(f, evento, E_MISSAO, t + (24 * 60)) < 0)
+    {
+      fprintf(stderr, "\nDEBUG: ERRO AO INSERIR NA FILA FPRIO %d ",t);
+      return;
+    }
+    // fprio_insere MISSAO(t + 24*60, M)
   }
+  if (habsBaseEncontrada)
+    cjto_destroi(habsBaseEncontrada);
 }
 
 // Encerra a simula¸c˜ao no instante T:
@@ -511,7 +507,7 @@ void missao(int t, struct missao_ent *m, struct mundo_ent *w, struct fprio_t *f)
 void fim(int t, struct mundo_ent *m)
 {
   int hMortos = 0;
-  printf("%d: FIM", t);
+  printf("\n%d: FIM", t);
   for (int i = 0; i < m->nHerois; i++)
   {
     struct heroi_ent *heroi = m->herois[i];
@@ -547,7 +543,7 @@ void fim(int t, struct mundo_ent *m)
     if (missao->cumprida == 1)
       missoesCump++;
 
-    tentativasTotal += missao->tentativas;
+    tentativasTotal = tentativasTotal + missao->tentativas;
 
     if (minTentativas == -1 || missao->tentativas < minTentativas)
       minTentativas = missao->tentativas;
@@ -571,5 +567,5 @@ void fim(int t, struct mundo_ent *m)
   printf("\nTENTATIVAS/MISSAO: MIN %d, MAX %d, MEDIA %.1f", minTentativas, maxTentativas, mediaTentativas);
 
   float taxaM = (float)hMortos / m->nHerois * 100;
-  printf("TAXA MORTALIDADE: %.1f%%", taxaM);
+  printf("\nTAXA MORTALIDADE: %.1f%%\n", taxaM);
 }
