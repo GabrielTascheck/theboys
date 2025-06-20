@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
 #include "entidades.h"
 #include "eventos.h"
 #include "init.h"
@@ -21,55 +23,75 @@ int main()
 {
   struct mundo_ent *w = init_mundo();
   if (!w)
-    printf("ERRO EM CRIAR MUNDO");
-
-  printf("\nnH: %d nB: %d nM: %d", w->nHerois, w->nBases, w->nMissoes);
+    printf("DEBUG: ERRO EM CRIAR MUNDO");
 
   struct fprio_t *fEventos = fprio_cria();
   if (!fEventos)
-    printf("\nERRO");
+    printf("\nDEBUG: ERRO EM CRIAR fEventos");
 
+  // INICIANDO BASES
   for (int i = 0; i < N_BASES; i++)
   {
-    init_base(w);
-    if (w->bases[i] == NULL)
-      printf("\nERRO EM CRIAR BASE");
+    struct base_ent *b = init_base(w);
+    if (b == NULL)
+      printf("\nDEBUG: ERRO EM CRIAR BASE");
   }
+
+  // INICIANDO HEROIS
   for (int i = 0; i < N_HEROIS; i++)
   {
     int tempo = aleat(0, 5);
-    int base = aleat(0, w->nBases);
+    int base = aleat(0, w->nBases - 1);
+
     struct heroi_ent *h = init_heroi(w);
     if (h == NULL)
-      printf("\nERRO EM CRIAR HEROI");
+      printf("\nDEBUG: ERRO EM CRIAR HEROI");
 
-    printf("\nID: %d VIVO: %d", h->id, h->status);
-
-    struct evt_gen *evento;
+    struct evt_gen *evento = evento_cria();
     evento->h = h;
-    evento->b = w->bases[h->id];
-    fprio_insere(fEventos, evento, 1, tempo); // evento CHEGA = 1
+    evento->b = w->bases[base];
+    if (!evento->b)
+      printf("\nDEBUG: BASE NULA NA INIT");
+    fprio_insere(fEventos, evento, E_CHEGA, tempo); // evento CHEGA = 1
   }
-  for (int i = 0; i < w->nHerois; i++)
+
+  // INICIANDO MISSOES
+  for (int i = 0; i < N_MISSOES; i++)
   {
     int tempo = aleat(0, T_FIM_DO_MUNDO);
     struct missao_ent *m = init_missao(w);
-    fprio_insere(fEventos, m, 9, tempo); // evento MISSAO = 9
+
+    struct evt_gen *evento = evento_cria();
+    evento->m = m;
+    fprio_insere(fEventos, evento, E_MISSAO, tempo); // evento MISSAO = 9
+    // printf("\n%6d: INSERE MISSÃO %d EM %d", w->relogio, m->id, tempo);
+  }
+
+  for(int i = 0; i < w->nBases; i++)
+  {
+    printf("\nI: %d BASEID: %d",i,w->bases[i]->id);
   }
 
   if (fEventos->num == 0)
-    printf("\nERRO2");
+    printf("\n0 EVENTOS");
 
-  printf("\nnH: %d nB: %d nM: %d", w->nHerois, w->nBases, w->nMissoes);
-  printf("\n");
+  fprio_insere(fEventos, NULL, 0, T_FIM_DO_MUNDO);
+
   fprio_imprime(fEventos);
   printf("\n");
-
   while (fEventos->num > 0)
   {
+    w->eventos++;
     int tipoEvento;
-    struct evt_gen *evento;
+    struct evt_gen *evento = evento_cria();
+    // printf("\n");
+    // fprio_imprime(fEventos);
+    // printf("\n");
     evento = fprio_retira(fEventos, &tipoEvento, &w->relogio);
+    printf("\nEVENTO: %d TIPO: %d PRIO: %d", w->eventos, tipoEvento, w->relogio);
+    if(evento->h)
+      if(evento->h->status == 0)
+        tipoEvento = -1;
 
     switch (tipoEvento)
     {
@@ -77,6 +99,7 @@ int main()
       fim(w->relogio, w);
       return 0;
       break;
+
     case 1:
       chega(w->relogio, evento->h, evento->b, fEventos);
       break;
@@ -112,11 +135,15 @@ int main()
     case 9:
       missao(w->relogio, evento->m, w, fEventos);
       break;
+    
+    case -1:
+      break;
 
     default:
-      printf("TIPO DE EVENTO NÃO DEFINIDO TIPO: %d", tipoEvento);
+      printf("\nTIPO DE EVENTO NÃO DEFINIDO TIPO: %d", tipoEvento);
       break;
     }
+    free(evento);
   }
 
   printf("\n");

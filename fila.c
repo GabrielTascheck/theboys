@@ -40,7 +40,7 @@ struct fila_t *fila_destroi(struct fila_t *f)
   if (!f)
     return NULL;
 
-  if(f->num == 1)
+  if (f->num == 1)
   {
     free(f->prim);
   }
@@ -102,7 +102,7 @@ void *fila_retira(struct fila_t *f)
   free(aux);
 
   f->num--;
-  if(!f->num)
+  if (!f->num)
     f->fim = NULL;
 
   return item;
@@ -120,16 +120,15 @@ int fila_tamanho(struct fila_t *f)
 // Imprime o conteúdo da fila
 void fila_imprime(struct fila_t *f)
 {
+
+  int i;
+  struct fila_nodo_t *aux;
+  aux = f->prim;
+  for (i = 0; i < f->num - 1; i++)
   {
-    int i;
-    struct fila_nodo_t *aux;
-    aux = f->prim;
-    for (i = 0; i < f->num - 1; i++)
-    {
-      printf("%d ", 2);
-      aux = aux->prox;
-    }
-    if (f->num > 0)
-      printf("%d", 2);
+    printf("%d ", aux->item);
+    aux = aux->prox;
   }
+  if (f->num > 0)
+    printf("%d", 2);
 }
