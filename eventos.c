@@ -203,7 +203,7 @@ void espera(int t, struct heroi_ent *h, struct base_ent *b, struct fprio_t *f)
     return;
   }
 
-  if (fila_insere(b->espera, h) == -1)
+  if (fila_insere(b->espera, h, h->id) == -1)
   {
     fprintf(stderr, "\nDEBUG: Erro ao inserir na fila de espera");
     return;
@@ -263,7 +263,7 @@ void avisa(int t, struct base_ent *b, struct fprio_t *f)
   printf(" ]");
   while (b->espera->num < b->lot && b->espera->num > 0) // enquanto houver vaga em B e houver her´ois esperando na fila
   {
-    struct heroi_ent *heroi = fila_retira(b->espera);
+    struct heroi_ent *heroi = fila_retira(b->espera, &heroi->id);
     if (!heroi)
     {
       fprintf(stderr, "\nDEBUG: Fila retira falhou");

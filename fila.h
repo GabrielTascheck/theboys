@@ -4,6 +4,7 @@
 // descreve um nodo da fila 
 struct fila_nodo_t
 {
+	int valor;
 	void *item ;			// item associado ao nodo
 	struct fila_nodo_t *prox;	// próximo nodo
 };
@@ -27,11 +28,11 @@ struct fila_t *fila_destroi (struct fila_t *f);
 // Insere o item na fila
 // Inserir duas vezes o mesmo item (o mesmo ponteiro) é um erro.
 // Retorno: número de itens na fila após a operação ou -1 se erro.
-int fila_insere (struct fila_t *f, void *item);
+int fila_insere (struct fila_t *f, void *item, int valor);
 
 // Retira o primeiro item da fila e o devolve
 // Retorno: ponteiro para o item retirado ou NULL se fila vazia ou erro.
-void *fila_retira (struct fila_t *f);
+void *fila_retira (struct fila_t *f, int *valor);
 
 // Informa o número de itens na fila.
 // Retorno: N >= 0 ou -1 se erro.

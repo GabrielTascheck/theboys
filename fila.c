@@ -62,7 +62,7 @@ struct fila_t *fila_destroi(struct fila_t *f)
 // Insere o item na fila
 // Inserir duas vezes o mesmo item (o mesmo ponteiro) é um erro.
 // Retorno: número de itens na fila após a operação ou -1 se erro.
-int fila_insere(struct fila_t *f, void *item)
+int fila_insere(struct fila_t *f, void *item, int valor)
 {
   if (!f || !item)
     return -1;
@@ -73,6 +73,7 @@ int fila_insere(struct fila_t *f, void *item)
 
   novo->item = item;
   novo->prox = NULL;
+  novo->valor = valor;
   if (!f->num)
   {
     f->prim = novo;
@@ -89,7 +90,7 @@ int fila_insere(struct fila_t *f, void *item)
 
 // Retira o primeiro item da fila e o devolve
 // Retorno: ponteiro para o item retirado ou NULL se fila vazia ou erro.
-void *fila_retira(struct fila_t *f)
+void *fila_retira(struct fila_t *f, int *valor)
 {
   if (!f || !f->num)
     return NULL;
@@ -97,6 +98,8 @@ void *fila_retira(struct fila_t *f)
   struct fila_nodo_t *aux;
   void *item = f->prim->item;
 
+  *valor = f->prim->valor;
+  
   aux = f->prim;
   f->prim = aux->prox;
   free(aux);
@@ -126,7 +129,7 @@ void fila_imprime(struct fila_t *f)
   aux = f->prim;
   for (i = 0; i < f->num - 1; i++)
   {
-    printf("%d ", aux->item);
+    printf("%d ", aux->valor);
     aux = aux->prox;
   }
   if (f->num > 0)
